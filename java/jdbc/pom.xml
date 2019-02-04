@@ -94,7 +94,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>2.4.3</version>
+        <version>3.0-hubspot-SNAPSHOT</version>
         <executions>
           <execution>
             <phase>package</phase>
@@ -102,8 +102,65 @@
               <goal>shade</goal>
             </goals>
             <configuration>
-              <shadedArtifactAttached>true</shadedArtifactAttached>
-              <shadedClassifierName>fatjar</shadedClassifierName>
+              <createDependencyReducedPom>true</createDependencyReducedPom>
+              <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
+              <createSourcesJar>true</createSourcesJar>
+              <shadeSourcesContent>true</shadeSourcesContent>
+              <dependencyReducedPomLocation>${hubspot.pom.path}</dependencyReducedPomLocation>
+              <artifactSet>
+                <excludes>
+                  <exclude>com.google.code.gson:gson</exclude>
+                  <exclude>commons-io:commons-io</exclude>
+                  <exclude>commons-lang:commons-lang</exclude>
+                  <exclude>joda-time:joda-time</exclude>
+                  <exclude>joda-time:joda-time</exclude>
+                  <exclude>org.apache.commons:commons-collections4</exclude>
+                  <exclude>com.google.code.findbugs:jsr305</exclude>
+                  <exclude>junit:junit</exclude>
+                  <exclude>log4j:log4j</exclude>
+                </excludes>
+              </artifactSet>
+              <filters>
+                <filter>
+                <artifact>*:*</artifact>
+                <excludes>
+                  <exclude>META-INF/*.SF</exclude>
+                  <exclude>META-INF/*.DSA</exclude>
+                  <exclude>META-INF/*.RSA</exclude>
+                  <exclude>META-INF/native/libnetty_tcnative_linux_x86_64.so</exclude>
+                  <exclude>META-INF/native/libnetty_tcnative_osx_x86_64.jnilib</exclude>
+                  <exclude>META-INF/native/netty_tcnative_windows_x86_64.dll</exclude>
+                </excludes>
+                </filter>
+              </filters>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer" />
+              </transformers>
+              <relocations>
+                <relocation>
+                  <pattern>com.</pattern>
+                  <shadedPattern>hidden.vitess.com.</shadedPattern>
+                  <excludes>
+                    <exclude>io.vitess.**</exclude>
+                  </excludes>
+                </relocation>
+                <relocation>
+                  <pattern>io.</pattern>
+                  <shadedPattern>hidden.vitess.io.</shadedPattern>
+                  <excludes>
+                    <exclude>io.vitess.**</exclude>
+                  </excludes>
+                </relocation>
+                <relocation>
+                  <pattern>okio.</pattern>
+                  <shadedPattern>hidden.vitess.okio.</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>okhttp3.</pattern>
+                  <shadedPattern>hidden.vitess.okhttp3.</shadedPattern>
+                </relocation>
+              </relocations>
             </configuration>
           </execution>
         </executions>

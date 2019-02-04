@@ -38,8 +38,11 @@ import javax.net.ssl.SSLException;
 import io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.NegotiationType;
 import io.grpc.netty.NettyChannelBuilder;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.util.concurrent.DefaultThreadFactory;
 import io.vitess.client.Context;
 import io.vitess.client.RpcClient;
 import io.vitess.client.RpcClientFactory;
@@ -49,6 +52,10 @@ import io.vitess.client.grpc.tls.TlsOptions;
  * GrpcClientFactory creates RpcClients with the gRPC implementation.
  */
 public class GrpcClientFactory implements RpcClientFactory {
+  private static final EventLoopGroup VITESS_EVENT_LOOP_GROUP = new NioEventLoopGroup(
+      6,
+      new DefaultThreadFactory("vitess-netty", true)
+  );
 
   private RetryingInterceptorConfig config;
   private CallCredentials callCredentials;
@@ -119,8 +126,12 @@ public class GrpcClientFactory implements RpcClientFactory {
    *    target is passed to NettyChannelBuilder which will resolve based on scheme, by default dns.
    * @return
    */
-  protected NettyChannelBuilder channelBuilder(String target){
-    return NettyChannelBuilder.forTarget(target);
+  protected NettyChannelBuilder channelBuilder(String target) {
+    // TODO: Allow providing custom RpcClient providers in vitess-jdbc properties
+    return NettyChannelBuilder
+        .forTarget(target)
+        .eventLoopGroup(VITESS_EVENT_LOOP_GROUP)
+        .maxInboundMessageSize(16777216);
   }
 
   /**
